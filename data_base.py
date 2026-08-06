@@ -24,16 +24,19 @@ def init_db():
         CREATE TABLE IF NOT EXISTS books (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
-        author TEXT NOT NULL,
+        author_id INTEGER NOT NULL,
         category TEXT,
         date INTEGER,
         origin TEXT, 
-        genre TEXT) """)
+        genre TEXT,
+        FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE CASCADE,
+        UNIQUE(title, author)) """)
 
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS authors (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL) """)
+        name TEXT NOT NULL,
+        ) """)
 
         cursor.execute("""CREATE TABLE IF NOT EXISTS chapters(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,6 +48,7 @@ def init_db():
         UNIQUE(book_id, chapter_number)
     );""")
 
+init_db()
 app = FastAPI(title="My Digital Library of Alexandria")
 
 class book_schema(BaseModel):
@@ -62,11 +66,9 @@ class chapter_schema(BaseModel):
     chapter_number: int
     title: str
     body: str
-
 @app.get("/")
 def check_connection():
     return {"message": "connected"}
-
 @app.get("/books")
 def get_books(title: str = None):
     with get_db_cursor() as cursor:
@@ -75,7 +77,6 @@ def get_books(title: str = None):
         else:
             cursor.execute("SELECT * FROM books")
         return {"books": cursor.fetchall()}
-
 @app.post("/books")
 def add_book(book:book_schema):
     with get_db_cursor() as cursor:
@@ -83,11 +84,20 @@ def add_book(book:book_schema):
         "(title, author, date, origin, genre) VALUES (?, ?, ?, ?, ?)",
             (book.title, book.author, book.date, book.origin, book.genre))
         return {"message": "Book added successfully"}
-
-@app.post("/chapters")
+@app.post("/books/{books_title}/chapters")
 def add_chapter(chapter:chapter_schema):
     with get_db_cursor() as cursor:
         cursor.execute("INSERT INTO chapters"
         "(book_id, chapter_number, title, body) VALUES (?, ?, ?, ?)",
     (chapter.book_id, chapter.chapter_number, chapter.title, chapter.body))
         return {"message": "Chapter added successfully"}
+@app.delete("/books/{books_title}")
+def delete_book(books_title:str):
+    with get_db_cursor() as cursor:
+        cursor.execute("DELETE FROM books WHERE title = ?", (books_title,))
+        return {"message": "Book deleted successfully"}
+@app.delete("/books/{books_title}")
+def delete_book(books_title:str):
+    with get_db_cursor() as cursor:
+        cursor.execute("DELETE FROM books WHERE title = ?", (books_title,))
+        return {"message": "Book deleted successfully"}
