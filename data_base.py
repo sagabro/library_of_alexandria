@@ -21,22 +21,21 @@ def get_db_cursor():
 def init_db():
     with get_db_cursor() as cursor:
         cursor.execute("""
+            CREATE TABLE IF NOT EXISTS authors
+            (id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL)""")
+
+        cursor.execute("""
         CREATE TABLE IF NOT EXISTS books (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
-        author_id INTEGER NOT NULL,
+        author_id INTEGER,
         category TEXT,
         date INTEGER,
         origin TEXT, 
         genre TEXT,
         FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE CASCADE,
-        UNIQUE(title, author)) """)
-
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS authors (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        ) """)
+        UNIQUE(title, author_id)) """)
 
         cursor.execute("""CREATE TABLE IF NOT EXISTS chapters(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,9 +44,11 @@ def init_db():
         title TEXT,
         body TEXT NOT NULL,
         FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
-        UNIQUE(book_id, chapter_number)
-    );""")
-
+        UNIQUE(book_id, chapter_number))""")
+        
+        cursor.execute(""" SELECT B.id AS book_id, B.title, A.id AS author_id, A.name
+                            FROM books B
+                            INNER JOIN authors A ON B.author_id = A.id; """)
 init_db()
 app = FastAPI(title="My Digital Library of Alexandria")
 
