@@ -83,14 +83,14 @@ def add_book(book:book_schema):
     with get_db_cursor() as cursor:
         cursor.execute("INSERT OR IGNORE INTO authors (name) VALUES (?)", (book.author,))
 
-        cursor.execute("INSERT INTO books"
+        cursor.execute("INSERT OR IGNORE INTO books"
         "(title, author, date, origin, genre) VALUES (?, ?, ?, ?, ?)",
             (book.title, book.author, book.date, book.origin, book.genre))
         return {"message": "Book added successfully"}
 @app.post("/books/{books_title}/chapters")
 def add_chapter(chapter:chapter_schema):
     with get_db_cursor() as cursor:
-        cursor.execute("INSERT INTO chapters"
+        cursor.execute("INSERT OR IGNORE INTO chapters"
         "(book_id, chapter_number, title, body) VALUES (?, ?, ?, ?)",
     (chapter.book_id, chapter.chapter_number, chapter.title, chapter.body))
         return {"message": "Chapter added successfully"}
